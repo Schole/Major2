@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+
+ <form method="GET" action ="{% url 'availability' %}">
+    {% csrf_token %}
+         <select name="category">
+             {% for category in illness_categories %}
+                 <option value={{category.illness_category_id}}>{{ category.name }}</option>
+             {% endfor %}
+         </select>
+         <select name="illness">
+             {% for illness in illnesses %}
+                 <option value={{illness.illness_id}}>{{ illness.name }}</option>
+             {% endfor %}
+         </select>
+    <input type="submit">
+</form>
+
+<br>
+
+</body>
+</html>

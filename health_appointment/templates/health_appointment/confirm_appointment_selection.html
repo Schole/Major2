@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+
+<body>
+Please confirm your selected appointment:
+<br>
+Illness: {{ illnesses_name }}
+Illness Category: {{ illness_category_name }}
+{% if doctor_name is not None %}
+Doctor: doctor_name
+{% endif %}
+Time: appointment_time_slot
+
+{#<form method="get" action="{% url 'confirm_appointment_selection' %}">#}
+{#    {% csrf_token %}#}
+{#    {% for appointment, doctor_ids in dict_gathered_appointments.items %}#}
+{#        <input type="hidden" name="illnesses" value={{ illnesses }}/>#}
+{#        <input type="hidden" name="illness_category" value={{ illness_category }}/>#}
+{#        <button name="appointment_time_slot"  type="submit" value={{ appointment }}>select</button>{{ appointment }}#}
+{#        <select name="doctor_id">#}
+{#                 <option>Optional</option>#}
+{#             {% for doctor_id in doctor_ids %}#}
+{#                 <option value={{doctor_id}}>{{ doctor_id }}</option>#}
+{#             {% endfor %}#}
+{#         </select>#}
+{#        <br>#}
+{#    {% endfor %}#}
+{#</form>#}
+
+</body>
+
+</html>

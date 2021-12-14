@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+{#<form method="get" action="{% url 'confirm_appointment_selection' %}">#}
+{#    {% csrf_token %}#}
+{#    <input type="text" name="illnesses" value={{ illnesses }}>#}
+{#    <input type="text" name="illness_category" value={{ illness_category }}>#}
+{#    Choose an appointment:#}
+{#    <br>#}
+{#    <button name="appointment_time_slot"  type="submit" value={{ appointment }}>select</button>#}
+{##}
+{#    {% for appointment, doctor_ids in dict_gathered_appointments.items %}#}
+{#        {{ appointment }}#}
+{#        <select name="doctor_id">#}
+{#                 <option>Optional</option>#}
+{#             {% for doctor_id in doctor_ids %}#}
+{#                 <option value={{ doctor_id }}>{{ doctor_id }}</option>#}
+{#             {% endfor %}#}
+{#         </select>#}
+{#        <br>#}
+{#    {% endfor %}#}
+{#</form>#}
+{#<br>#}
+{% for appointment, doctor_ids in dict_gathered_appointments.items %}
+    <form method="get" action="{% url 'create_appointment_success' %}">
+        <input type="hidden" name="illnesses" value={{ illnesses }}>
+        <input type="hidden" name="illness_category" value={{ illness_category }}>
+        <input type="hidden" name="user_id" value={{ user_id }}>
+        {{ appointment }}
+        <select name="doctor_id">}
+                <option value = 'not_select'>Optional</option>
+            {% for doctor_id in doctor_ids %}
+                <option value={{ doctor_id }}>{{ doctor_id }}</option>
+            {% endfor %}
+        </select>
+        <button name="appointment_time_slot" type="submit" value={{ appointment }}>select</button>
+    </form>
+{% endfor %}
+
+</body>
+</html>
