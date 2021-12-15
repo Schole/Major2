@@ -12,10 +12,15 @@ from health_appointment.util.appointment_helper import (
     convert_time_slots_to_str,
     convert_time_str_to_timestamp,
     find_time_slot_duration,
+    find_doctor_with_minimal_appointments,
+    gather_available_time_slots,
 )
 
-from health_appointment.models.model_user import Doctor
-from health_appointment.models.model_appointment import Appointment
+from health_appointment.models.doctor_model import Doctor
+from health_appointment.models.appointment_model import (
+    Appointment,
+    create_appointment,
+)
 
 from health_appointment.config.config import Config
 
@@ -38,7 +43,7 @@ class TestAppointmentHelper(TestCase):
                 ],
             ],
             current_time=Timestamp(year=2021, month=12, day=15, hour=10, minute=0),
-            min_ahead_showing_availability=1 * 3 * 60,
+            minutes_ahead_showing_availability=1 * 3 * 60,
             time_unit=30,
         )
 
@@ -88,7 +93,7 @@ class TestAppointmentHelper(TestCase):
             bio_gender=True,
             type="doctor",
             specialty=1,
-            valid_appointment_record=''
+            active_appointment_ids=''
         )
 
         appointment = Appointment.objects.create(
@@ -107,8 +112,8 @@ class TestAppointmentHelper(TestCase):
         )
 
         self.assertEqual(
-            doctor.valid_appointment_record,
-            str(appointment.appointment_id)
+            doctor.active_appointment_ids,
+            str(appointment.appointment_id)+","
         )
 
     def test_parse_appointment_ids_single(self) -> None:
@@ -146,7 +151,7 @@ class TestAppointmentHelper(TestCase):
             bio_gender=True,
             type="doctor",
             specialty=1,
-            valid_appointment_record=''
+            active_appointment_ids=''
         )
 
         appointment_0 = Appointment.objects.create(
@@ -240,6 +245,84 @@ class TestAppointmentHelper(TestCase):
             30
         )
 
+    def test_find_doctor_with_minimal_appointments(self) -> None:
+        doctor = Doctor.objects.create()
+        doctor_1 = Doctor.objects.create()
+        
+        appointment = create_appointment(
+            doctor_id=doctor.user_id,
+            patient_id=uuid.uuid4(),
+            create_time=Timestamp(year=2021, month=12, day=15, hour=10, minute=0),
+            begin_time=Timestamp(year=2021, month=12, day=15, hour=10, minute=0),
+            duration=30,
+            status="active",
+        )
+        add_appointment(
+            doctor,
+            appointment.appointment_id,
+        )
+        
+        selected_doctor = find_doctor_with_minimal_appointments(
+            [
+                doctor,
+                doctor_1
+            ]
+        )
+        
+        self.assertEqual(
+            selected_doctor.user_id,
+            doctor_1.user_id
+        )
+        
+    def test_gather_available_time_slots(self) -> None:
+        doctor = Doctor.objects.create()
+        doctor_1 = Doctor.objects.create()
 
+        available_time_slots_for_all_doctors = {
+            doctor.user_id: [
+                [
+                    Timestamp(year=2021, month=12, day=15, hour=10, minute=0),
+                    Timestamp(year=2021, month=12, day=15, hour=10, minute=30)
+                ],
+            ],
+            doctor_1.user_id: [
+                [
+                    Timestamp(year=2021, month=12, day=15, hour=10, minute=0),
+                    Timestamp(year=2021, month=12, day=15, hour=10, minute=30)
+                ],
+                [
+                    Timestamp(year=2021, month=12, day=15, hour=11, minute=0),
+                    Timestamp(year=2021, month=12, day=15, hour=11, minute=30)
+                ],
+               
+            ]
+        }
+        
+        gathered_time_slots = gather_available_time_slots(
+            available_time_slots_for_all_doctors
+        )
+        
+        self.assertEqual(
+            gathered_time_slots,
+            {
+                '21-12-15-10-00,21-12-15-10-30': [
+                    [
+                        doctor.user_id,
+                        "",
+                    ],
+                    [
+                        doctor_1.user_id,
+                        "",
+                    ],
+                ],
+                '21-12-15-11-00,21-12-15-11-30': [
+                    [
+                        doctor_1.user_id,
+                        "",
+                    ]
+                    
+                ]
+            }
+        )
 
 

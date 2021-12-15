@@ -1,5 +1,7 @@
-from .models.model_specialty import Specialty, SpecialtyCategory
-from .models.model_user import User, Doctor, Patient
-from .models.model_illness import Illness, IllnessCategory
-from .models.model_appointment import Appointment
-from .models.model_illness import Illness, IllnessCategory
+from .models.specialty_model import Specialty, SpecialtyCategory
+from .models.user_model import User
+from health_appointment.models.patient_model import Patient
+from health_appointment.models.doctor_model import Doctor
+from .models.illness_model import Illness, IllnessCategory
+from .models.appointment_model import Appointment
+from .models.illness_model import Illness, IllnessCategory

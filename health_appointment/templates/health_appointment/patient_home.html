@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+Welcome to online appointment system !
+<br>
+
+<form action="{% url 'select_illness' %}" name="Make appointments">
+    <input type="hidden" name="user_id" value={{ user_id }}>
+    <button name="Make appointments" type="submit">Make appointments</button>
+</form>
+
+You have the following appointments:
+<br>
+
+{% for appointment, doctor in appointments %}
+    {{ appointment.begin_time }} with doctor {{ doctor.name }}
+    <form action="{% url 'cancel_appointment' %}" name="Make appointments">
+        <input type="hidden" name="user_id" value={{ user_id }}>
+        <input type="hidden" name="appointment_id" value={{ appointment.appointment_id }}>
+        <button name="Cancel appointments" type="submit">Cancel</button>
+    </form>
+{% endfor %}
+
+</body>
+</html>

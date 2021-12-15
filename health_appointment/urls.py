@@ -1,18 +1,26 @@
 from django.urls import path
+from django.contrib.auth.views import LoginView, LogoutView
 
 from .views import (
+    HomeView,
+    PatientHomeView,
     SelectIllnessView,
-    ViewAvailableAppointment,
-    ConfirmAppointment,
-    CreateAppointment,
+    CheckAvailableAppointmentView,
+    ConfirmAppointmentView,
+    CreateAppointmentView,
+    CancelAppointmentView,
 )
 
 
 urlpatterns = [
-    path('', SelectIllnessView.as_view(), name='home'),
+    path('login/', LoginView.as_view(), name='login'),
+    path('home/', HomeView.as_view(), name='home'),
+    path('patient_home/', PatientHomeView.as_view(), name='patient_home'),
+    path('patient_home/<uuid:user_id>/', PatientHomeView.as_view(), name='patient_home'),
     path('select/', SelectIllnessView.as_view(), name='select_illness'),
-    path('availability/', ViewAvailableAppointment.as_view(), name='availability'),
-    path('no_availability/', ViewAvailableAppointment.as_view(), name='no_availability'),
-    path('confirm_appointment_selection/', ConfirmAppointment.as_view(), name='confirm_appointment_selection'),
-    path('create_appointment_success/', CreateAppointment.as_view(), name='create_appointment_success'),
+    path('create_appointment/', CheckAvailableAppointmentView.as_view(), name='create_appointment'),
+    path('cancel_appointment/', CancelAppointmentView.as_view(), name='cancel_appointment'),
+    path('no_availability/', CheckAvailableAppointmentView.as_view(), name='no_availability'),
+    path('confirm_appointment_selection/', ConfirmAppointmentView.as_view(), name='confirm_appointment_selection'),
+    path('create_appointment_success/', CreateAppointmentView.as_view(), name='create_appointment_success'),
 ]

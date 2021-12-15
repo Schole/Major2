@@ -1,15 +1,21 @@
-from collections import defaultdict
 import uuid
 
 from typing import List, Union
 
 from pandas import Timestamp, Timedelta, to_datetime
 from django.db.models import Q
-from django.db.models.query import QuerySet
 
-from ..models.model_user import Doctor, Patient, get_doctors
-from ..models.model_appointment import Appointment
-from ..config.config import Config
+from health_appointment.models.user_model import User
+from health_appointment.models.doctor_model import (
+    Doctor,
+)
+from health_appointment.models.patient_model import Patient
+from health_appointment.models.appointment_model import (
+    Appointment,
+    get_appointment,
+)
+from health_appointment.util.user_helper import convert_user
+from health_appointment.config.config import Config
 
 
 def find_doctor_with_minimal_appointments(
@@ -23,10 +29,10 @@ def find_doctor_with_minimal_appointments(
     dict_doctor_to_upcoming_appointments = dict()
     
     for doctor in doctors:
-        active_appointments = parse_appointment_ids(doctor.valid_appointment_record)
+        active_appointments = parse_appointment_ids(doctor.active_appointment_ids)
         number_of_active_appointments = len(active_appointments)
         dict_doctor_to_upcoming_appointments[doctor] = number_of_active_appointments
-        
+    
     best_doctor = min(dict_doctor_to_upcoming_appointments, key=dict_doctor_to_upcoming_appointments.get)
     return best_doctor
 
@@ -35,16 +41,90 @@ def add_appointment(
     user: Union[Doctor, Patient],
     appointment: uuid,
 ) -> None:
+    """
+    Add an appointment to a doctor or a patient.
+    :param user:
+    :param appointment:
+    :return:
+    """
     appointment_str = str(appointment)
-    current_appointments = user.valid_appointment_record
+    current_appointments = user.active_appointment_ids
     if current_appointments == "":
-        user.valid_appointment_record = appointment_str + ","
+        user.active_appointment_ids = appointment_str + ","
     else:
-        user.valid_appointment_record = current_appointments + "," + appointment_str
+        user.active_appointment_ids = current_appointments + "," + appointment_str
     
     user.save()
     
     return None
+
+
+def cancel_appointments(
+    appointments: List[
+        Union[
+            uuid.UUID, Appointment,
+        ]
+    ]
+):
+    for appointment in appointments:
+        cancel_appointment(appointment)
+
+
+def cancel_appointment(
+    appointment: Union[uuid.UUID, Appointment],
+):
+    if isinstance(
+        appointment,
+        uuid.UUID
+    ):
+        appointment = get_appointment(appointment)
+    
+    doctor_id = appointment.doctor_id
+    patient_id = appointment.patient_id
+    
+    delete_appointment_from_user(
+        appointment_id=appointment.appointment_id,
+        user_id=doctor_id
+    )
+    
+    delete_appointment_from_user(
+        appointment_id=appointment.appointment_id,
+        user_id=patient_id
+    )
+
+
+def delete_appointment_from_user(
+    appointment_id: Union[uuid.UUID, str],
+    user_id: uuid.UUID,
+):
+    user = convert_user(user_id)
+    active_appointment_ids = user.active_appointment_ids
+    active_appointments = set(parse_appointment_ids(active_appointment_ids))
+    
+    if isinstance(
+        appointment_id,
+        str
+    ):
+        appointment_id = uuid.UUID(appointment_id)
+        
+    if appointment_id not in active_appointments:
+        return None
+    
+    active_appointments.remove(appointment_id)
+    
+    if len(active_appointments) == 0:
+        active_appointment_ids = ''
+    else:
+        active_appointment_ids = ','.join(
+            [
+                str(active_appointment_id) for active_appointment_id in active_appointments
+            ]
+        )
+    
+    user.update_active_appointment_ids(
+        user,
+        active_appointment_ids,
+    )
 
 
 def parse_appointment_ids(
@@ -69,7 +149,7 @@ def find_doctor_available_time(
     :param today_time
     :return:
     """
-    appointment_records = doctor.valid_appointment_record
+    appointment_records = doctor.active_appointment_ids
     appointment_ids = parse_appointment_ids(appointment_records)
     
     occupied_times = get_occupied_offsite_time_slots(
@@ -159,22 +239,20 @@ def gather_available_time_slots(
     """
     dict_time_slots_to_doctor_ids = dict()
     
-    doctors_wait_time_slots = available_time_slots_for_all_doctors
-    
-    for doctor, available_time_slots in doctors_wait_time_slots.items():
-        doctor_id = doctor
+    for doctor_id, available_time_slots in available_time_slots_for_all_doctors.items():
+        doctor = Doctor.get_user(doctor_id)
         for time_slot in available_time_slots:
             time_slot = convert_time_slots_to_str(time_slot)
             if time_slot in dict_time_slots_to_doctor_ids:
                 dict_time_slots_to_doctor_ids[
                     time_slot
-                ].append(doctor_id)
+                ].append([doctor_id, doctor.name])
             else:
                 dict_time_slots_to_doctor_ids[
                     time_slot
-                ] = [doctor_id]
+                ] = [[doctor_id, doctor.name]]
     
-    return dict_time_slots_to_doctor_ids
+    return dict(sorted(dict_time_slots_to_doctor_ids.items()))
 
 
 def convert_time_slots_to_str(
@@ -236,6 +314,5 @@ def is_appointment_match_time_slots(
     appointment: Appointment,
     time_slots: List[Timestamp],
 ) -> bool:
-    
     return appointment.begin_time == time_slots[0] and (
-            appointment.begin_time + Timedelta(appointment.duration, unit='min')) == time_slots[1]
+        appointment.begin_time + Timedelta(appointment.duration, unit='min')) == time_slots[1]

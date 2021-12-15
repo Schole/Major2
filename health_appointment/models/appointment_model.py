@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import uuid
 from typing import List
 
@@ -6,7 +8,7 @@ import django.utils.timezone as timezone
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 
-from pandas import Timestamp
+from pandas import Timestamp, Timedelta
 
 
 class Appointment(models.Model):
@@ -23,16 +25,18 @@ class Appointment(models.Model):
         validators=[MaxValueValidator(1440), MinValueValidator(0)]
     )
     """ the time for one appointment section in minutes, can be reset in config.py"""
-
-    def change_appointment_status(self, status):
-        self._status = status
-        return
-
+    
+    @classmethod
+    def get_end_time(cls, appointment: Appointment) -> Timestamp:
+        return appointment.begin_time + Timedelta(appointment.duration, unit="min")
 
 def get_appointments(appointment_ids: List[uuid.UUID]) -> List[Appointment]:
-    return [
-        get_appointment(appointment_id) for appointment_id in appointment_ids
-    ]
+    return sorted(
+        [
+            get_appointment(appointment_id) for appointment_id in appointment_ids
+        ],
+        key = lambda x: x.begin_time
+    )
 
 def get_appointment(appointment_id) -> Appointment:
     objects = Appointment.objects.filter(
@@ -46,13 +50,13 @@ def get_appointment(appointment_id) -> Appointment:
 
 
 def create_appointment(
-    appointment_id: uuid.UUID,
     doctor_id: uuid.UUID,
     patient_id: uuid.UUID,
     create_time: Timestamp,
     begin_time: Timestamp,
-    status: str,
     duration: int,
+    status: str,
+    appointment_id: uuid.UUID = uuid.uuid4(),
 ) -> Appointment:
     return Appointment.objects.create(
         appointment_id=appointment_id,
@@ -60,6 +64,7 @@ def create_appointment(
         patient_id=patient_id,
         create_time=create_time,
         begin_time=begin_time,
-        status=status,
         duration=duration,
+        status=status,
     )
+

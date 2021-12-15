@@ -6,9 +6,10 @@
 </head>
 <body>
 
-
- <form method="GET" action ="{% url 'availability' %}">
+Please select:
+ <form method="GET" action ="{% url 'create_appointment' %}">
     {% csrf_token %}
+    <input type="hidden" name="user_id" value={{ user_id }}>
          <select name="category">
              {% for category in illness_categories %}
                  <option value={{category.illness_category_id}}>{{ category.name }}</option>

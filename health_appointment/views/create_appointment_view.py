@@ -2,42 +2,43 @@ import uuid
 from typing import List
 from django.http import HttpResponse
 from django.views.generic import DetailView
+from django.shortcuts import redirect
 
 from pandas import Timestamp
 
-from ..models.model_user import (
+from health_appointment.models.doctor_model import (
     get_doctor,
-    get_patient,
 )
+from health_appointment.models.patient_model import (
+    Patient
+)
+from health_appointment.models.appointment_model import create_appointment
 
-from ..models.model_appointment import create_appointment
-
-from ..util.appointment_helper import (
+from health_appointment.util.appointment_helper import (
     add_appointment,
     convert_time_str_to_timestamp,
     find_time_slot_duration,
     find_doctor_with_minimal_appointments,
 )
 
-from ..util.doctor_helper import find_available_doctors
+from health_appointment.util.doctor_helper import find_doctors_available_at_timeslot
 
-from .util import send_http_request
 
-class CreateAppointment(DetailView):
-    DEFAULT_TEMPLATE = 'health_appointment/create_appointment_success.html'
-
+class CreateAppointmentView(DetailView):
+    DEFAULT_TEMPLATE = 'health_appointment/patient_home.html'
+ 
     def get(self, request, *args, **kwargs) -> HttpResponse:
-        patient_id, doctor_id, appointment_time = CreateAppointment.get_request_attributes(request)
+        patient_id, doctor_id, appointment_time = CreateAppointmentView.get_request_attributes(request)
         appointment_time = convert_time_str_to_timestamp(appointment_time)
         
         if doctor_id == 'not_select':
-            doctors = find_available_doctors(appointment_time)
+            doctors = find_doctors_available_at_timeslot(appointment_time)
             doctor = find_doctor_with_minimal_appointments(doctors)
             doctor_id = doctor.user_id
         else:
-            doctor = get_doctor(doctor_id)
+            doctor = get_doctor(uuid.UUID(doctor_id))
             
-        patient = get_patient(patient_id)
+        patient = Patient.get_user(uuid.UUID(patient_id))
 
         duration = find_time_slot_duration(appointment_time)
         
@@ -60,15 +61,8 @@ class CreateAppointment(DetailView):
             patient,
             appointment.appointment_id
         )
-
-        return send_http_request(
-            request,
-            {
-                'doctor': doctor,
-                'appointment_time':appointment_time[0],
-            },
-            CreateAppointment.DEFAULT_TEMPLATE,
-        )
+        
+        return redirect('/health_appointment/patient_home/'+str(patient.user_id))
 
     @staticmethod
     def get_request_attributes(request) -> List[str]:

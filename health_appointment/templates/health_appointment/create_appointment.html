@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+{% for appointment, doctor_ids in dict_gathered_appointments.items %}
+    <form method="get" action="{% url 'create_appointment_success' %}">
+        <input type="hidden" name="illnesses" value={{ illnesses }}>
+        <input type="hidden" name="illness_category" value={{ illness_category }}>
+        <input type="hidden" name="user_id" value={{ user_id }}>
+        Appointment time: {{ appointment }},
+        Available doctor list:
+        <select name="doctor_id">}
+                <option value = 'not_select'>Optional</option>
+            {% for doctor_id in doctor_ids %}
+                <option value={{ doctor_id.0 }}>{{ doctor_id.1}}</option>
+            {% endfor %}
+        </select>
+        <button name="appointment_time_slot" type="submit" value={{ appointment }}>select</button>
+    </form>
+{% endfor %}
+
+</body>
+</html>
