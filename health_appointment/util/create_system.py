@@ -19,6 +19,7 @@ def create_user() -> None:
 
 
 def create_system() -> None:
+    create_user()
     create_illnesses()
     create_illness_category()
     create_specialty()

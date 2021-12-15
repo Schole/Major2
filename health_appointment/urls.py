@@ -6,7 +6,6 @@ from .views import (
     PatientHomeView,
     SelectIllnessView,
     CheckAvailableAppointmentView,
-    ConfirmAppointmentView,
     CreateAppointmentView,
     CancelAppointmentView,
 )
@@ -21,6 +20,5 @@ urlpatterns = [
     path('create_appointment/', CheckAvailableAppointmentView.as_view(), name='create_appointment'),
     path('cancel_appointment/', CancelAppointmentView.as_view(), name='cancel_appointment'),
     path('no_availability/', CheckAvailableAppointmentView.as_view(), name='no_availability'),
-    path('confirm_appointment_selection/', ConfirmAppointmentView.as_view(), name='confirm_appointment_selection'),
     path('create_appointment_success/', CreateAppointmentView.as_view(), name='create_appointment_success'),
 ]

@@ -14,9 +14,11 @@ from health_appointment.util.appointment_helper import (
     find_time_slot_duration,
     find_doctor_with_minimal_appointments,
     gather_available_time_slots,
+    cancel_appointments,
 )
 
 from health_appointment.models.doctor_model import Doctor
+from health_appointment.models.patient_model import Patient
 from health_appointment.models.appointment_model import (
     Appointment,
     create_appointment,
@@ -324,5 +326,51 @@ class TestAppointmentHelper(TestCase):
                 ]
             }
         )
+        
+    def test_cancel_appoints(self) -> None:
+        doctor = Doctor.objects.create(type='doctor')
+        patient = Patient.objects.create(type='patient')
+        
+        appointment = Appointment.objects.create(
+            appointment_id=uuid.uuid4(),
+            doctor_id=doctor.user_id,
+            patient_id=patient.user_id,
+            create_time=Timestamp(year=2021, month=12, day=15, hour=10, minute=0),
+            begin_time=Timestamp(year=2021, month=12, day=15, hour=10, minute=0),
+            duration=30,
+            status='',
+        )
 
+        appointment_1 = Appointment.objects.create(
+            appointment_id=uuid.uuid4(),
+            doctor_id=doctor.user_id,
+            patient_id=patient.user_id,
+            create_time=Timestamp(year=2021, month=12, day=15, hour=10, minute=0),
+            begin_time=Timestamp(year=2021, month=12, day=15, hour=10, minute=0),
+            duration=30,
+            status='',
+        )
+        
+        add_appointment(
+            doctor,
+            appointment.appointment_id
+        )
+        add_appointment(
+            doctor,
+            appointment_1.appointment_id
+        )
+        add_appointment(
+            patient,
+            appointment.appointment_id
+        )
+        add_appointment(
+            patient,
+            appointment_1.appointment_id
+        )
+        cancel_appointments(
+            [
+                appointment,
+                appointment_1.appointment_id
+            ]
+        )
 
