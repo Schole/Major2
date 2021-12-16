@@ -31,6 +31,5 @@ Login page
 View upcoming appointments and make appointments
 ![home](./assets/home.png)
 
-
 Check available appointments
 ![home](./assets/appointments.png)
