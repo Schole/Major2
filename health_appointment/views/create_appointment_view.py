@@ -61,7 +61,17 @@ class CreateAppointmentView(DetailView):
             patient,
             appointment.appointment_id
         )
-        
+
+        # from health_appointment.views.util import send_http_request
+        #
+        # return send_http_request(
+        #     request,
+        #     {
+        #         "doctor": doctor,
+        #         "appointment_time": appointment.begin_time
+        #     },
+        #     'health_appointment/create_appointment_success.html'
+        # )
         return redirect('/health_appointment/patient_home/'+str(patient.user_id))
 
     @staticmethod
